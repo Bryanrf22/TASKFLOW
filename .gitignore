@@ -1,0 +1,27 @@
+# Build results
+bin/
+obj/
+artifacts/
+publish/
+
+# IDE
+.vs/
+.vscode/
+.idea/
+
+# Databases
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+
+# Logs
+Logs/
+
+# Test and coverage artifacts
+test-results/
+coverage/
+*.trx
+
+# User-specific files
+*.user
