@@ -23,5 +23,10 @@ public sealed class ProjectMemberConfiguration : IEntityTypeConfiguration<Projec
             .WithMany()
             .HasForeignKey(m => m.ProjectId)
             .OnDelete(DeleteBehavior.Cascade);
+
+        builder.HasOne<AppUser>()
+            .WithMany()
+            .HasForeignKey(m => m.UserId)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }

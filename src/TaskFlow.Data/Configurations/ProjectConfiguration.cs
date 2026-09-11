@@ -25,5 +25,10 @@ public sealed class ProjectConfiguration : IEntityTypeConfiguration<Project>
         builder.Property(p => p.CreatedByUserId)
             .IsRequired()
             .HasMaxLength(450);
+
+        builder.HasOne<AppUser>()
+            .WithMany()
+            .HasForeignKey(p => p.CreatedByUserId)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }

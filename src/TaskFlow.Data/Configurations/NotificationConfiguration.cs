@@ -21,10 +21,15 @@ public sealed class NotificationConfiguration : IEntityTypeConfiguration<Notific
 
         builder.HasIndex(n => new { n.UserId, n.IsRead });
 
+        builder.HasOne<AppUser>()
+            .WithMany()
+            .HasForeignKey(n => n.UserId)
+            .OnDelete(DeleteBehavior.Restrict);
+
         builder.HasOne<Project>()
             .WithMany()
             .HasForeignKey(n => n.ProjectId)
-            .OnDelete(DeleteBehavior.Cascade);
+            .OnDelete(DeleteBehavior.Restrict);
 
         builder.HasOne<TaskItem>()
             .WithMany()

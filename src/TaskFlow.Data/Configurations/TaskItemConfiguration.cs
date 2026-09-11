@@ -39,5 +39,15 @@ public sealed class TaskItemConfiguration : IEntityTypeConfiguration<TaskItem>
             .WithMany()
             .HasForeignKey(t => t.ProjectId)
             .OnDelete(DeleteBehavior.Cascade);
+
+        builder.HasOne<AppUser>()
+            .WithMany()
+            .HasForeignKey(t => t.CreatedByUserId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasOne<AppUser>()
+            .WithMany()
+            .HasForeignKey(t => t.AssigneeId)
+            .OnDelete(DeleteBehavior.SetNull);
     }
 }
