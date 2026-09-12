@@ -96,9 +96,10 @@ public class PermissionsTests
     [InlineData(ProjectRole.Manager, ProjectRole.Member, true)]
     [InlineData(ProjectRole.Manager, ProjectRole.Manager, true)]
     [InlineData(ProjectRole.Manager, ProjectRole.Owner, false)]
-    [InlineData(ProjectRole.Owner, ProjectRole.Owner, false)]
+    [InlineData(ProjectRole.Owner, ProjectRole.Owner, true)]
     [InlineData(ProjectRole.Owner, ProjectRole.Manager, true)]
-    public void CanModifyMember_ManagerCannotTouchOwners(ProjectRole actor, ProjectRole targetRole, bool expected)
+    [InlineData(ProjectRole.Member, ProjectRole.Member, false)]
+    public void CanModifyMember_OnlyOwnerCanModifyOwners(ProjectRole actor, ProjectRole targetRole, bool expected)
     {
         Assert.Equal(expected, Permissions.CanModifyMember(actor, targetRole));
     }

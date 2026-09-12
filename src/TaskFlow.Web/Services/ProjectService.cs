@@ -141,6 +141,8 @@ public sealed class ProjectService
             return OperationResult.NotFound();
         if (!Permissions.CanManageMembers(role.Value))
             return OperationResult.Forbidden();
+        if (!Enum.IsDefined(typeof(ProjectRole), model.Role))
+            return OperationResult.Invalid();
         if (model.Role == ProjectRole.Owner && !Permissions.CanGrantOwner(role.Value))
             return OperationResult.Forbidden();
 
@@ -170,6 +172,8 @@ public sealed class ProjectService
             return OperationResult.NotFound();
         if (!Permissions.CanManageMembers(role.Value))
             return OperationResult.Forbidden();
+        if (!Enum.IsDefined(typeof(ProjectRole), newRole))
+            return OperationResult.Invalid();
 
         var target = await _db.ProjectMembers.SingleOrDefaultAsync(m => m.ProjectId == projectId && m.UserId == targetUserId);
         if (target is null)
@@ -203,6 +207,10 @@ public sealed class ProjectService
             return OperationResult.Forbidden();
         if (target.Role == ProjectRole.Owner && await IsLastOwnerAsync(projectId))
             return OperationResult.Conflict();
+
+        await _db.TaskItems
+            .Where(t => t.ProjectId == projectId && t.AssigneeId == targetUserId)
+            .ExecuteUpdateAsync(s => s.SetProperty(t => t.AssigneeId, (string?)null));
 
         _db.ProjectMembers.Remove(target);
         await _db.SaveChangesAsync();
