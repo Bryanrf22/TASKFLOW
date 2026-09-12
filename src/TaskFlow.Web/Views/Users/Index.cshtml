@@ -1,0 +1,64 @@
+@model TaskFlow.Web.Models.Admin.UsersListViewModel
+@{
+    ViewData["Title"] = "Usuarios";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="h3 mb-0">Usuarios</h1>
+</div>
+
+@if (TempData["Success"] is not null)
+{
+    <div class="alert alert-success">@TempData["Success"]</div>
+}
+@if (TempData["Error"] is not null)
+{
+    <div class="alert alert-danger">@TempData["Error"]</div>
+}
+
+<div class="table-responsive">
+    <table class="table table-striped align-middle">
+        <thead>
+            <tr>
+                <th>Email</th>
+                <th>Nombre</th>
+                <th>Alta</th>
+                <th>Administrador</th>
+                <th class="text-end">Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var user in Model.Users)
+            {
+                <tr>
+                    <td>@user.Email</td>
+                    <td>@user.DisplayName</td>
+                    <td>@user.CreatedAtUtc.ToString("dd/MM/yyyy")</td>
+                    <td>
+                        @if (user.IsAdministrator)
+                        {
+                            <span class="badge text-bg-danger">Sí</span>
+                        }
+                        else
+                        {
+                            <span class="badge text-bg-secondary">No</span>
+                        }
+                    </td>
+                    <td class="text-end">
+                        <form asp-action="ToggleAdmin" method="post" class="d-inline">
+                            <input type="hidden" name="userId" value="@user.Id" />
+                            @if (user.IsAdministrator)
+                            {
+                                <button type="submit" class="btn btn-sm btn-outline-danger">Quitar rol</button>
+                            }
+                            else
+                            {
+                                <button type="submit" class="btn btn-sm btn-outline-success">Asignar rol</button>
+                            }
+                        </form>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

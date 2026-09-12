@@ -18,6 +18,6 @@ public sealed class TaskLabelConfiguration : IEntityTypeConfiguration<TaskLabel>
         builder.HasOne<Label>()
             .WithMany()
             .HasForeignKey(tl => tl.LabelId)
-            .OnDelete(DeleteBehavior.Cascade);
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }

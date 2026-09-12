@@ -25,5 +25,10 @@ public sealed class TaskCommentConfiguration : IEntityTypeConfiguration<TaskComm
             .WithMany()
             .HasForeignKey(c => c.TaskId)
             .OnDelete(DeleteBehavior.Cascade);
+
+        builder.HasOne<AppUser>()
+            .WithMany()
+            .HasForeignKey(c => c.AuthorUserId)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }

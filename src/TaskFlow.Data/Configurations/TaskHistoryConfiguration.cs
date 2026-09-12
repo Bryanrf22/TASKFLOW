@@ -26,5 +26,10 @@ public sealed class TaskHistoryConfiguration : IEntityTypeConfiguration<TaskHist
             .WithMany()
             .HasForeignKey(h => h.TaskId)
             .OnDelete(DeleteBehavior.Cascade);
+
+        builder.HasOne<AppUser>()
+            .WithMany()
+            .HasForeignKey(h => h.ActorUserId)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }
