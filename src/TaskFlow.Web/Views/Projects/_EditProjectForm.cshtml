@@ -1,0 +1,18 @@
+@model TaskFlow.Web.Models.Projects.EditProjectViewModel
+
+<form asp-action="Edit" method="post">
+    <div asp-validation-summary="ModelOnly" class="text-danger mb-2" role="alert"></div>
+
+    <div class="mb-3">
+        <label asp-for="Name" class="form-label"></label>
+        <input asp-for="Name" class="form-control" />
+        <span asp-validation-for="Name" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Description" class="form-label"></label>
+        <textarea asp-for="Description" class="form-control" rows="2"></textarea>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Guardar cambios</button>
+</form>

@@ -1,0 +1,95 @@
+@model TaskFlow.Web.Models.Tasks.TaskDetailsViewModel
+@{
+    ViewData["Title"] = Model.Task.Title;
+}
+
+<p>
+    <a asp-controller="Projects" asp-action="Details" asp-route-projectId="@Model.ProjectId">&larr; @Model.ProjectName</a>
+</p>
+
+<h1 class="h3 mb-1">@Model.Task.Title</h1>
+<p class="text-muted">
+    Proyecto: <a asp-controller="Projects" asp-action="Details" asp-route-projectId="@Model.ProjectId">@Model.ProjectName</a> ·
+    Tu rol: <strong>@Model.MyRole</strong>
+</p>
+
+@if (TempData["Success"] is string success)
+{
+    <div class="alert alert-success">@success</div>
+}
+@if (TempData["Error"] is string error)
+{
+    <div class="alert alert-danger">@error</div>
+}
+
+<div class="row">
+    <div class="col-md-5">
+        <dl class="row mb-3">
+            <dt class="col-4">Estado</dt>
+            <dd class="col-8">@Model.Task.Status</dd>
+            <dt class="col-4">Prioridad</dt>
+            <dd class="col-8">@Model.Task.Priority</dd>
+            <dt class="col-4">Vencimiento</dt>
+            <dd class="col-8">@(Model.Task.DueDateUtc?.ToString("dd/MM/yyyy") ?? "—")</dd>
+            <dt class="col-4">Asignada a</dt>
+            <dd class="col-8">@(Model.Task.AssigneeId is null ? "—" : "Miembro del proyecto")</dd>
+            <dt class="col-4">Creada</dt>
+            <dd class="col-8">@Model.Task.CreatedAtUtc.ToString("dd/MM/yyyy")</dd>
+        </dl>
+
+        <p>@Model.Task.Description</p>
+
+        @if (Model.CanEdit)
+        {
+            <div class="card mb-3">
+                <div class="card-header">Editar tarea</div>
+                <div class="card-body">
+                    <partial name="_EditTaskForm" model="Model.EditModel" />
+                </div>
+            </div>
+        }
+
+        @if (Model.CanDelete)
+        {
+            <form asp-action="Delete" method="post" onsubmit="return confirm('¿Eliminar esta tarea?');">
+                <button type="submit" class="btn btn-outline-danger btn-sm">Eliminar tarea</button>
+            </form>
+        }
+    </div>
+
+    <div class="col-md-7">
+        <h2 class="h5">Comentarios</h2>
+
+        @if (Model.CanComment)
+        {
+            <form asp-action="AddComment" method="post" class="mb-3">
+                <textarea name="Body" class="form-control mb-2" rows="2" placeholder="Escribe un comentario…" required></textarea>
+                <button type="submit" class="btn btn-outline-primary btn-sm">Comentar</button>
+            </form>
+        }
+
+        @if (Model.Comments.Count == 0)
+        {
+            <p class="text-muted">Sin comentarios.</p>
+        }
+        else
+        {
+            <ul class="list-group">
+                @foreach (var c in Model.Comments)
+                {
+                    <li class="list-group-item">
+                        <div class="d-flex justify-content-between">
+                            <strong>@c.AuthorName</strong>
+                            <span class="text-muted small">@c.CreatedAtUtc.ToString("dd/MM/yyyy HH:mm")</span>
+                        </div>
+                        <div>@c.Body</div>
+                    </li>
+                }
+            </ul>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

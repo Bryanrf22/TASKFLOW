@@ -8,6 +8,7 @@ using TaskFlow.Core.Domain.Enums;
 using TaskFlow.Data;
 using TaskFlow.Web.Authorization;
 using TaskFlow.Web.Infrastructure;
+using TaskFlow.Web.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -47,11 +48,15 @@ builder.Services.ConfigureApplicationCookie(options =>
 builder.Services.AddAuthorization(options =>
 {
     options.AddPolicy(Policies.AdminOnly, policy => policy.RequireRole(ApplicationRoles.Admin));
+    options.AddPolicy(Policies.ProjectViewer, policy => policy.AddRequirements(new RequireProjectRoleRequirement(ProjectRole.Viewer)));
     options.AddPolicy(Policies.ProjectMember, policy => policy.AddRequirements(new RequireProjectRoleRequirement(ProjectRole.Member)));
     options.AddPolicy(Policies.ProjectManager, policy => policy.AddRequirements(new RequireProjectRoleRequirement(ProjectRole.Manager)));
+    options.AddPolicy(Policies.ProjectOwner, policy => policy.AddRequirements(new RequireProjectRoleRequirement(ProjectRole.Owner)));
 });
 
 builder.Services.AddScoped<IAuthorizationHandler, ProjectRoleAuthorizationHandler>();
+builder.Services.AddScoped<ProjectService>();
+builder.Services.AddScoped<TaskService>();
 
 builder.Services.AddControllersWithViews(options =>
 {

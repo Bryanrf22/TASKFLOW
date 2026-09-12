@@ -97,13 +97,61 @@ public class ProjectRoleAuthorizationHandlerTests
     }
 
     [Fact]
-    public async Task AdminBypassesProjectMembership()
+    public async Task AdminWithoutMembership_Fails()
     {
         var handler = new ProjectRoleAuthorizationHandler(new FakeMembershipReader());
         var context = CreateContext(
             CreatePrincipal("user-1", isAdmin: true),
             projectId: Guid.NewGuid(),
             requirement: new RequireProjectRoleRequirement(ProjectRole.Manager));
+
+        await handler.HandleAsync(context);
+
+        Assert.False(context.HasSucceeded);
+    }
+
+    [Fact]
+    public async Task ViewerRequiresViewer_Succeeds()
+    {
+        var reader = new FakeMembershipReader();
+        reader.SetRole("user-1", ProjectRole.Viewer);
+        var handler = new ProjectRoleAuthorizationHandler(reader);
+        var context = CreateContext(
+            CreatePrincipal("user-1"),
+            projectId: Guid.NewGuid(),
+            requirement: new RequireProjectRoleRequirement(ProjectRole.Viewer));
+
+        await handler.HandleAsync(context);
+
+        Assert.True(context.HasSucceeded);
+    }
+
+    [Fact]
+    public async Task ViewerRequiresMember_Fails()
+    {
+        var reader = new FakeMembershipReader();
+        reader.SetRole("user-1", ProjectRole.Viewer);
+        var handler = new ProjectRoleAuthorizationHandler(reader);
+        var context = CreateContext(
+            CreatePrincipal("user-1"),
+            projectId: Guid.NewGuid(),
+            requirement: new RequireProjectRoleRequirement(ProjectRole.Member));
+
+        await handler.HandleAsync(context);
+
+        Assert.False(context.HasSucceeded);
+    }
+
+    [Fact]
+    public async Task OwnerRequiresOwner_Succeeds()
+    {
+        var reader = new FakeMembershipReader();
+        reader.SetRole("user-1", ProjectRole.Owner);
+        var handler = new ProjectRoleAuthorizationHandler(reader);
+        var context = CreateContext(
+            CreatePrincipal("user-1"),
+            projectId: Guid.NewGuid(),
+            requirement: new RequireProjectRoleRequirement(ProjectRole.Owner));
 
         await handler.HandleAsync(context);
 

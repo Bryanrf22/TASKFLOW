@@ -1,0 +1,155 @@
+@model TaskFlow.Web.Models.Projects.ProjectDetailsViewModel
+@{
+    ViewData["Title"] = Model.Project.Name;
+}
+
+<h1 class="h3 mb-1">@Model.Project.Name <span class="badge text-bg-light">@Model.Project.Key</span></h1>
+<p class="text-muted">
+    Tu rol: <strong>@Model.MyRole</strong> ·
+    Creado: @Model.Project.CreatedAtUtc.ToString("dd/MM/yyyy")
+</p>
+
+@if (TempData["Success"] is string success)
+{
+    <div class="alert alert-success">@success</div>
+}
+@if (TempData["Error"] is string error)
+{
+    <div class="alert alert-danger">@error</div>
+}
+
+<p>@Model.Project.Description</p>
+
+@if (Model.CanEditSettings)
+{
+    <div class="card mb-4">
+        <div class="card-header">Configuración del proyecto</div>
+        <div class="card-body">
+            <partial name="_EditProjectForm" model="Model.EditModel" />
+        </div>
+    </div>
+}
+
+@if (Model.CanDelete)
+{
+    <form asp-action="Delete" method="post" class="mb-4 d-inline-block" onsubmit="return confirm('¿Eliminar este proyecto y todo su contenido?');">
+        <button type="submit" class="btn btn-outline-danger btn-sm">Eliminar proyecto</button>
+    </form>
+}
+
+<hr />
+
+<div class="row">
+    <div class="col-lg-5">
+        <h2 class="h5">Miembros</h2>
+
+        @if (Model.CanManageMembers)
+        {
+            <div class="mb-3">
+                <partial name="_AddMemberForm" model="Model.CreateMember" />
+            </div>
+        }
+
+        <table class="table table-sm align-middle">
+            <thead>
+                <tr>
+                    <th>Usuario</th>
+                    <th>Rol</th>
+                    @if (Model.CanManageMembers)
+                    {
+                        <th class="text-end">Cambiar / Quitar</th>
+                    }
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var m in Model.Members)
+                {
+                    <tr>
+                        <td>
+                            <span class="d-block">@m.DisplayName</span>
+                            <span class="text-muted">@m.Email</span>
+                        </td>
+                        <td>
+                            @if (m.Role == TaskFlow.Core.Domain.Enums.ProjectRole.Owner)
+                            {
+                                <span class="badge text-bg-danger">@m.Role</span>
+                            }
+                            else
+                            {
+                                <span class="badge text-bg-secondary">@m.Role</span>
+                            }
+                        </td>
+                        @if (Model.CanManageMembers)
+                        {
+                            <td class="text-end">
+                                <form asp-action="ChangeMemberRole" method="post" class="d-inline-flex align-items-center gap-1">
+                                    <input type="hidden" name="userId" value="@m.UserId" />
+                                    <select name="newRole" class="form-select form-select-sm">
+                                        @foreach (var role in (TaskFlow.Core.Domain.Enums.ProjectRole[])Enum.GetValues(typeof(TaskFlow.Core.Domain.Enums.ProjectRole)))
+                                        {
+                                            <option selected="@(m.Role == role)" value="@((int)role)">@role</option>
+                                        }
+                                    </select>
+                                    <button type="submit" class="btn btn-sm btn-outline-primary">Cambiar</button>
+                                </form>
+                                <form asp-action="RemoveMember" method="post" class="d-inline">
+                                    <input type="hidden" name="userId" value="@m.UserId" />
+                                    <button type="submit" class="btn btn-sm btn-outline-danger">Quitar</button>
+                                </form>
+                            </td>
+                        }
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <div class="col-lg-7">
+        <h2 class="h5">Tareas</h2>
+
+        @if (Model.CanCreateTask)
+        {
+            <div class="card mb-3">
+                <div class="card-header">Nueva tarea</div>
+                <div class="card-body">
+                    <partial name="_CreateTaskForm" model="Model.CreateTask" />
+                </div>
+            </div>
+        }
+
+        @if (Model.Tasks.Count == 0)
+        {
+            <p class="text-muted">No hay tareas.</p>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table table-sm align-middle">
+                    <thead>
+                        <tr>
+                            <th>Tarea</th>
+                            <th>Estado</th>
+                            <th>Prioridad</th>
+                            <th>Asignada a</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var t in Model.Tasks)
+                        {
+                            <tr>
+                                <td><a asp-controller="Tasks" asp-action="Details" asp-route-id="@t.Id">@t.Title</a></td>
+                                <td>@t.Status</td>
+                                <td>@t.Priority</td>
+                                <td>@(t.AssigneeEmail ?? "—")</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

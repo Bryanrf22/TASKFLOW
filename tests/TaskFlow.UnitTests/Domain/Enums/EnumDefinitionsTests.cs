@@ -29,9 +29,23 @@ public class EnumDefinitionsTests
     }
 
     [Fact]
-    public void ProjectRole_Manager_Outranks_Member()
+    public void ProjectRole_Defines_ExpectedHierarchy()
     {
+        var roles = Enum.GetValues<ProjectRole>();
+
+        Assert.Equal(4, roles.Length);
+        Assert.Equal((int)ProjectRole.Viewer, 0);
+        Assert.Equal((int)ProjectRole.Member, 1);
+        Assert.Equal((int)ProjectRole.Manager, 2);
+        Assert.Equal((int)ProjectRole.Owner, 3);
+    }
+
+    [Fact]
+    public void ProjectRole_Owner_OutranksAll()
+    {
+        Assert.True(ProjectRole.Owner > ProjectRole.Manager);
         Assert.True(ProjectRole.Manager > ProjectRole.Member);
+        Assert.True(ProjectRole.Member > ProjectRole.Viewer);
     }
 
     [Fact]
