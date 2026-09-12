@@ -11,6 +11,7 @@ public sealed class CreateMemberViewModel
     public string Email { get; set; } = string.Empty;
 
     [Required(ErrorMessage = "El rol es obligatorio.")]
+    [EnumDataType(typeof(ProjectRole), ErrorMessage = "El rol no es válido.")]
     [Display(Name = "Rol")]
     public ProjectRole Role { get; set; } = ProjectRole.Member;
 }

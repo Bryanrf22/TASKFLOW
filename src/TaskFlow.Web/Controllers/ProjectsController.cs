@@ -93,6 +93,12 @@ public class ProjectsController : Controller
     [HttpPost("{projectId:guid}/Members/Add")]
     public async Task<IActionResult> AddMember(Guid projectId, CreateMemberViewModel model)
     {
+        if (!ModelState.IsValid)
+        {
+            TempData["Error"] = "Datos inválidos.";
+            return RedirectToAction(nameof(Details), new { projectId });
+        }
+
         var result = await _projects.AddMemberAsync(CurrentUserId(), projectId, model);
         switch (result.Status)
         {
@@ -117,6 +123,12 @@ public class ProjectsController : Controller
     [HttpPost("{projectId:guid}/Members/{userId}/Role")]
     public async Task<IActionResult> ChangeMemberRole(Guid projectId, string userId, ProjectRole newRole)
     {
+        if (!ModelState.IsValid)
+            return BadRequest();
+
+        if (!Enum.IsDefined(typeof(ProjectRole), newRole))
+            return BadRequest();
+
         var result = await _projects.ChangeMemberRoleAsync(CurrentUserId(), projectId, userId, newRole);
         switch (result.Status)
         {
@@ -124,6 +136,8 @@ public class ProjectsController : Controller
                 return NotFound();
             case OperationStatus.Forbidden:
                 return StatusCode(StatusCodes.Status403Forbidden);
+            case OperationStatus.Invalid:
+                return BadRequest();
             case OperationStatus.Conflict:
                 TempData["Error"] = "El proyecto debe conservar al menos un Owner.";
                 break;

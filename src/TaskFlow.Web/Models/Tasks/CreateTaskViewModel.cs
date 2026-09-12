@@ -16,9 +16,11 @@ public sealed class CreateTaskViewModel
     public string? Description { get; set; }
 
     [Display(Name = "Prioridad")]
+    [EnumDataType(typeof(TaskPriority), ErrorMessage = "La prioridad no es válida.")]
     public TaskPriority Priority { get; set; } = TaskPriority.Medium;
 
     [Display(Name = "Estado")]
+    [EnumDataType(typeof(TaskStatus), ErrorMessage = "El estado no es válido.")]
     public TaskStatus Status { get; set; } = TaskStatus.Todo;
 
     [DataType(DataType.Date)]

@@ -32,7 +32,7 @@ public static class Permissions
         => IsAtLeast(role, ProjectRole.Manager);
 
     public static bool CanModifyMember(ProjectRole actor, ProjectRole targetRole)
-        => CanManageMembers(actor) && targetRole != ProjectRole.Owner;
+        => CanManageMembers(actor) && (targetRole != ProjectRole.Owner || CanGrantOwner(actor));
 
     public static bool CanGrantOwner(ProjectRole actor)
         => actor == ProjectRole.Owner;
