@@ -90,7 +90,7 @@ public class AuthFlowTests
     }
 
     [Fact]
-    public async Task Register_ValidUser_RedirectsHome()
+    public async Task Register_ValidUser_RedirectsToConfirmation_AndCannotLoginYet()
     {
         await using var factory = CreateFactory(NewDbPath());
         using var client = factory.CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false });
@@ -108,7 +108,11 @@ public class AuthFlowTests
         var response = await client.PostAsync("/Account/Register", content);
 
         Assert.Equal(HttpStatusCode.Redirect, response.StatusCode);
-        Assert.Equal("/", response.Headers.Location?.ToString());
+        Assert.Contains("/Account/RegisterConfirmation", response.Headers.Location?.ToString());
+
+        var afterRegister = await client.GetAsync("/Projects");
+        Assert.Equal(HttpStatusCode.Redirect, afterRegister.StatusCode);
+        Assert.Contains("/Account/Login", afterRegister.Headers.Location?.ToString());
     }
 
     [Fact]
@@ -170,7 +174,7 @@ public class AuthFlowTests
         await using var factory = CreateFactory(NewDbPath());
         using var client = factory.CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false });
 
-        var login = await PostLoginAsync(client, "admin@taskflow.local", "Admin123!");
+        var login = await PostLoginAsync(client, "admin@taskflow.local", "Taskflow#Admin2026");
 
         Assert.Equal(HttpStatusCode.Redirect, login.StatusCode);
 
