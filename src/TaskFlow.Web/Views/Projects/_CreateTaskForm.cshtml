@@ -1,0 +1,53 @@
+@model TaskFlow.Web.Models.Tasks.CreateTaskViewModel
+
+<form asp-action="CreateTask" method="post">
+    <div asp-validation-summary="ModelOnly" class="text-danger mb-2" role="alert"></div>
+
+    <div class="mb-3">
+        <label asp-for="Title" class="form-label"></label>
+        <input asp-for="Title" class="form-control" />
+        <span asp-validation-for="Title" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Description" class="form-label"></label>
+        <textarea asp-for="Description" class="form-control" rows="2"></textarea>
+    </div>
+
+    <div class="row">
+        <div class="col-sm-3 mb-3">
+            <label asp-for="Priority" class="form-label"></label>
+            <select asp-for="Priority" class="form-select">
+                @foreach (var p in (TaskFlow.Core.Domain.Enums.TaskPriority[])Enum.GetValues(typeof(TaskFlow.Core.Domain.Enums.TaskPriority)))
+                {
+                    <option value="@((int)p)">@p</option>
+                }
+            </select>
+        </div>
+        <div class="col-sm-3 mb-3">
+            <label asp-for="Status" class="form-label"></label>
+            <select asp-for="Status" class="form-select">
+                @foreach (var s in (TaskFlow.Core.Domain.Enums.TaskStatus[])Enum.GetValues(typeof(TaskFlow.Core.Domain.Enums.TaskStatus)))
+                {
+                    <option value="@((int)s)">@s</option>
+                }
+            </select>
+        </div>
+        <div class="col-sm-3 mb-3">
+            <label asp-for="DueDateUtc" class="form-label"></label>
+            <input asp-for="DueDateUtc" type="date" class="form-control" />
+        </div>
+        <div class="col-sm-3 mb-3">
+            <label asp-for="AssigneeId" class="form-label"></label>
+            <select asp-for="AssigneeId" class="form-select">
+                <option value="">Sin asignar</option>
+                @foreach (var m in Model.AssignableMembers)
+                {
+                    <option value="@m.UserId">@m.Email</option>
+                }
+            </select>
+        </div>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Crear tarea</button>
+</form>

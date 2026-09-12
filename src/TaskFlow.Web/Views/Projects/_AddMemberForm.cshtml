@@ -1,0 +1,15 @@
+@model TaskFlow.Web.Models.Projects.CreateMemberViewModel
+
+<form asp-action="AddMember" method="post">
+    <div class="input-group">
+        <input asp-for="Email" class="form-control" placeholder="email@dominio.com" autocomplete="off" />
+        <select asp-for="Role" class="form-select" style="max-width: 130px;">
+            @foreach (var role in (TaskFlow.Core.Domain.Enums.ProjectRole[])Enum.GetValues(typeof(TaskFlow.Core.Domain.Enums.ProjectRole)))
+            {
+                <option value="@((int)role)">@role</option>
+            }
+        </select>
+        <button type="submit" class="btn btn-outline-primary">Añadir</button>
+    </div>
+    <span asp-validation-for="Email" class="text-danger"></span>
+</form>

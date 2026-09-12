@@ -2,6 +2,8 @@ namespace TaskFlow.Core.Domain.Enums;
 
 public enum ProjectRole
 {
-    Member = 0,
-    Manager = 1
+    Viewer = 0,
+    Member = 1,
+    Manager = 2,
+    Owner = 3
 }
