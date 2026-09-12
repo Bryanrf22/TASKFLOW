@@ -1,3 +1,4 @@
+using System.Data;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using TaskFlow.Core.Domain.Abstractions;
@@ -183,8 +184,23 @@ public sealed class ProjectService
             return OperationResult.Forbidden();
         if (newRole == ProjectRole.Owner && !Permissions.CanGrantOwner(role.Value))
             return OperationResult.Forbidden();
-        if (target.Role == ProjectRole.Owner && newRole != ProjectRole.Owner && await IsLastOwnerAsync(projectId))
-            return OperationResult.Conflict();
+
+        if (target.Role == ProjectRole.Owner && newRole != ProjectRole.Owner)
+        {
+            using var transaction = await _db.Database.BeginTransactionAsync(IsolationLevel.Serializable);
+            var ownerCount = await _db.ProjectMembers.CountAsync(
+                m => m.ProjectId == projectId && m.Role == ProjectRole.Owner);
+            if (ownerCount <= 1)
+            {
+                await transaction.RollbackAsync();
+                return OperationResult.Conflict();
+            }
+
+            target.Role = newRole;
+            await _db.SaveChangesAsync();
+            await transaction.CommitAsync();
+            return OperationResult.Ok();
+        }
 
         target.Role = newRole;
         await _db.SaveChangesAsync();
@@ -203,18 +219,38 @@ public sealed class ProjectService
         if (target is null)
             return OperationResult.NotFound();
 
-        if (target.Role == ProjectRole.Owner && !Permissions.CanGrantOwner(role.Value))
-            return OperationResult.Forbidden();
-        if (target.Role == ProjectRole.Owner && await IsLastOwnerAsync(projectId))
-            return OperationResult.Conflict();
+        if (target.Role == ProjectRole.Owner)
+        {
+            if (!Permissions.CanGrantOwner(role.Value))
+                return OperationResult.Forbidden();
 
+            using var transaction = await _db.Database.BeginTransactionAsync(IsolationLevel.Serializable);
+            var ownerCount = await _db.ProjectMembers.CountAsync(
+                m => m.ProjectId == projectId && m.Role == ProjectRole.Owner);
+            if (ownerCount <= 1)
+            {
+                await transaction.RollbackAsync();
+                return OperationResult.Conflict();
+            }
+
+            await RemoveMemberAsync(projectId, targetUserId);
+            await transaction.CommitAsync();
+            return OperationResult.Ok();
+        }
+
+        await RemoveMemberAsync(projectId, targetUserId);
+        return OperationResult.Ok();
+    }
+
+    private async Task RemoveMemberAsync(Guid projectId, string targetUserId)
+    {
         await _db.TaskItems
             .Where(t => t.ProjectId == projectId && t.AssigneeId == targetUserId)
             .ExecuteUpdateAsync(s => s.SetProperty(t => t.AssigneeId, (string?)null));
 
-        _db.ProjectMembers.Remove(target);
+        var membership = await _db.ProjectMembers.SingleAsync(m => m.ProjectId == projectId && m.UserId == targetUserId);
+        _db.ProjectMembers.Remove(membership);
         await _db.SaveChangesAsync();
-        return OperationResult.Ok();
     }
 
     private async Task<IReadOnlyList<MemberViewModel>> ListMembersAsync(Guid projectId)
@@ -249,9 +285,6 @@ public sealed class ProjectService
                       AssigneeEmail = assignee == null ? null : assignee.Email
                   })
             .ToListAsync();
-
-    private async Task<bool> IsLastOwnerAsync(Guid projectId)
-        => await _db.ProjectMembers.CountAsync(m => m.ProjectId == projectId && m.Role == ProjectRole.Owner) <= 1;
 
     private async Task DeleteProjectDataAsync(Guid projectId)
     {

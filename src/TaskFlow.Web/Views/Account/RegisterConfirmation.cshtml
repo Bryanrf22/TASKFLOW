@@ -1,0 +1,28 @@
+@{
+    ViewData["Title"] = "Confirmar correo";
+}
+
+<div class="row justify-content-center">
+    <div class="col-md-6 col-lg-5">
+        <div class="text-center">
+            <h1 class="h3 mb-4">Revisa tu correo</h1>
+            <p>
+                Si la cuenta no existía, te hemos enviado un enlace de confirmación.
+                Entra en tu correo para activar tu cuenta.
+            </p>
+
+            <p class="text-muted small">
+                ¿Ya confirmaste tu correo?
+                <a asp-action="Login">Inicia sesión aquí</a>.
+            </p>
+
+            @if ((bool?)ViewData["ShowDevelopmentLink"] == true && ViewData["EmailConfirmationUrl"] is string url)
+            {
+                <div class="alert alert-info">
+                    <p class="mb-2">Enlace de confirmación (solo entorno de desarrollo):</p>
+                    <a href="@url">Confirmar mi correo</a>
+                </div>
+            }
+        </div>
+    </div>
+</div>

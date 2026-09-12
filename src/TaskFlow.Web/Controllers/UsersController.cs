@@ -1,6 +1,8 @@
+using System.Data;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using TaskFlow.Core.Domain.Authorization;
 using TaskFlow.Data;
 using TaskFlow.Web.Authorization;
@@ -12,10 +14,12 @@ namespace TaskFlow.Web.Controllers;
 public class UsersController : Controller
 {
     private readonly UserManager<AppUser> _userManager;
+    private readonly AppDbContext _db;
 
-    public UsersController(UserManager<AppUser> userManager)
+    public UsersController(UserManager<AppUser> userManager, AppDbContext db)
     {
         _userManager = userManager;
+        _db = db;
     }
 
     public async Task<IActionResult> Index()
@@ -66,14 +70,17 @@ public class UsersController : Controller
             return RedirectToAction(nameof(Index));
         }
 
-        var admins = await _userManager.GetUsersInRoleAsync(ApplicationRoles.Admin);
-        if (admins.Count <= 1)
+        await using var transaction = await _db.Database.BeginTransactionAsync(IsolationLevel.Serializable);
+        var currentAdmins = await _userManager.GetUsersInRoleAsync(ApplicationRoles.Admin);
+        if (currentAdmins.Count <= 1)
         {
+            await transaction.RollbackAsync();
             TempData["Error"] = "No se puede retirar el rol al último administrador del sistema.";
             return RedirectToAction(nameof(Index));
         }
 
         var removeResult = await _userManager.RemoveFromRoleAsync(target, ApplicationRoles.Admin);
+        await transaction.CommitAsync();
         TempData["Success"] = removeResult.Succeeded
             ? "Rol de administrador retirado a " + target.Email + "."
             : "No se pudo retirar el rol de administrador.";
