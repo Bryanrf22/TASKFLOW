@@ -81,7 +81,7 @@ public class AdminAndAccountTests
         var target = await CreateUserAsync(factory, "promote@example.com");
         using var client = factory.CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false });
 
-        var login = await PostLoginAsync(client, "admin@taskflow.local", "Admin123!");
+        var login = await PostLoginAsync(client, "admin@taskflow.local", "Taskflow#Admin2026");
         Assert.Equal(HttpStatusCode.Redirect, login.StatusCode);
 
         var page = await client.GetStringAsync("/Users");
@@ -121,7 +121,7 @@ public class AdminAndAccountTests
             await userManager.AddToRoleAsync(tracked!, ApplicationRoles.Admin);
         }
 
-        var login = await PostLoginAsync(client, "admin@taskflow.local", "Admin123!");
+        var login = await PostLoginAsync(client, "admin@taskflow.local", "Taskflow#Admin2026");
         Assert.Equal(HttpStatusCode.Redirect, login.StatusCode);
 
         var page = await client.GetStringAsync("/Users");
@@ -151,7 +151,7 @@ public class AdminAndAccountTests
         await using var _ = factory;
         using var client = factory.CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false });
 
-        var login = await PostLoginAsync(client, "admin@taskflow.local", "Admin123!");
+        var login = await PostLoginAsync(client, "admin@taskflow.local", "Taskflow#Admin2026");
         Assert.Equal(HttpStatusCode.Redirect, login.StatusCode);
 
         AppUser admin;
@@ -190,7 +190,7 @@ public class AdminAndAccountTests
         await using var _ = factory;
         using var client = factory.CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false });
 
-        var login = await PostLoginAsync(client, "admin@taskflow.local", "Admin123!");
+        var login = await PostLoginAsync(client, "admin@taskflow.local", "Taskflow#Admin2026");
         Assert.Equal(HttpStatusCode.Redirect, login.StatusCode);
 
         var page = await client.GetStringAsync("/Users");
@@ -214,7 +214,7 @@ public class AdminAndAccountTests
         await using var _ = factory;
         using var client = factory.CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false });
 
-        var login = await PostLoginAsync(client, "admin@taskflow.local", "Admin123!");
+        var login = await PostLoginAsync(client, "admin@taskflow.local", "Taskflow#Admin2026");
         Assert.Equal(HttpStatusCode.Redirect, login.StatusCode);
 
         var page = await client.GetStringAsync("/Users");
@@ -261,7 +261,7 @@ public class AdminAndAccountTests
     }
 
     [Fact]
-    public async Task Register_DuplicateEmail_ShowsError()
+    public async Task Register_DuplicateEmail_DoesNotRevealExistingAccount()
     {
         var factory = CreateFactory(NewDbPath());
         await using var _ = factory;
@@ -278,9 +278,11 @@ public class AdminAndAccountTests
             ["__RequestVerificationToken"] = token
         }));
 
-        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Equal(HttpStatusCode.Redirect, response.StatusCode);
+        Assert.Contains("/Account/RegisterConfirmation", response.Headers.Location?.ToString());
+
         var html = await response.Content.ReadAsStringAsync();
-        Assert.Contains("Ya existe una cuenta con este email", WebUtility.HtmlDecode(html));
+        Assert.DoesNotContain("Ya existe una cuenta", html);
 
         using var scope = factory.Services.CreateScope();
         var userManager = scope.ServiceProvider.GetRequiredService<UserManager<AppUser>>();

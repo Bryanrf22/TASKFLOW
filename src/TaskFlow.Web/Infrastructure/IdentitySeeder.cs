@@ -6,9 +6,6 @@ namespace TaskFlow.Web.Infrastructure;
 
 public sealed class IdentitySeeder
 {
-    private const string DefaultAdminEmail = "admin@taskflow.local";
-    private const string DefaultAdminPassword = "Admin123!";
-
     private readonly UserManager<AppUser> _userManager;
     private readonly RoleManager<IdentityRole> _roleManager;
     private readonly IConfiguration _configuration;
@@ -39,17 +36,13 @@ public sealed class IdentitySeeder
             _logger.LogInformation("Rol {Role} creado", ApplicationRoles.Admin);
         }
 
-        var email = _configuration["Seed:AdminEmail"];
+        var email = _configuration["Seed:AdminEmail"]?.Trim();
         var password = _configuration["Seed:AdminPassword"];
 
         if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(password))
             return;
 
-        if (string.Equals(email, DefaultAdminEmail, StringComparison.OrdinalIgnoreCase)
-            && string.Equals(password, DefaultAdminPassword, StringComparison.Ordinal))
-        {
-            _logger.LogWarning("Se está usando la cuenta de administrador por defecto de desarrollo ({Email}). Cámbiala para entornos de publicación.", email);
-        }
+        ValidateCredentials(email, password);
 
         var admin = await _userManager.FindByEmailAsync(email);
         if (admin is null)
@@ -79,6 +72,24 @@ public sealed class IdentitySeeder
             {
                 _logger.LogError("No se pudo asignar el rol {Role} a {Email}: {Errors}", ApplicationRoles.Admin, email, string.Join("; ", addResult.Errors.Select(e => e.Description)));
             }
+        }
+    }
+
+    private static void ValidateCredentials(string email, string password)
+    {
+        if (password.Length < 12
+            || !password.Any(char.IsUpper)
+            || !password.Any(char.IsLower)
+            || !password.Any(char.IsDigit)
+            || !password.Any(ch => !char.IsLetterOrDigit(ch)))
+        {
+            throw new InvalidOperationException(
+                "La siembra de administrador (Seed:AdminEmail/Seed:AdminPassword) exige una contraseña de al menos 12 caracteres con mayúsculas, minúsculas, dígitos y símbolos. Usa una contraseña fuerte o retira la sección Seed.");
+        }
+
+        if (!email.Contains('@'))
+        {
+            throw new InvalidOperationException("Seed:AdminEmail debe ser una dirección de correo válida.");
         }
     }
 }
