@@ -59,7 +59,7 @@ public class AccountController : Controller
 
         if (RequireEmailConfirmation && !user.EmailConfirmed)
         {
-            ModelState.AddModelError(string.Empty, "Email o contraseña incorrectos. Si son correctos, revisa que hayas confirmado tu correo.");
+            ModelState.AddModelError(string.Empty, "Email o contraseña incorrectos.");
             return View(model);
         }
 

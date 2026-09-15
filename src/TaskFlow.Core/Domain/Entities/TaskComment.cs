@@ -7,5 +7,4 @@ public sealed class TaskComment
     public string AuthorUserId { get; set; } = string.Empty;
     public string Content { get; set; } = string.Empty;
     public DateTime CreatedAtUtc { get; set; }
-    public DateTime? EditedAtUtc { get; set; }
 }

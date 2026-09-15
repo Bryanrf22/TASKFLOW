@@ -290,19 +290,11 @@ public sealed class ProjectService
     {
         var taskIds = await _db.TaskItems.Where(t => t.ProjectId == projectId).Select(t => t.Id).ToListAsync();
 
-        await _db.Notifications
-            .Where(n => n.ProjectId == projectId || (n.TaskId != null && taskIds.Contains(n.TaskId.Value)))
-            .ExecuteDeleteAsync();
+        await using var transaction = await _db.Database.BeginTransactionAsync();
         await _db.TaskComments.Where(c => taskIds.Contains(c.TaskId)).ExecuteDeleteAsync();
-        await _db.TaskHistoryEntries.Where(h => taskIds.Contains(h.TaskId)).ExecuteDeleteAsync();
-
-        var labelIds = await _db.Labels.Where(l => l.ProjectId == projectId).Select(l => l.Id).ToListAsync();
-        await _db.TaskLabels
-            .Where(tl => taskIds.Contains(tl.TaskId) || labelIds.Contains(tl.LabelId))
-            .ExecuteDeleteAsync();
-        await _db.Labels.Where(l => l.ProjectId == projectId).ExecuteDeleteAsync();
         await _db.TaskItems.Where(t => t.ProjectId == projectId).ExecuteDeleteAsync();
         await _db.ProjectMembers.Where(m => m.ProjectId == projectId).ExecuteDeleteAsync();
         await _db.Projects.Where(p => p.Id == projectId).ExecuteDeleteAsync();
+        await transaction.CommitAsync();
     }
 }

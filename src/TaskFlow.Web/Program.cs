@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Authorization;
 using Microsoft.AspNetCore.RateLimiting;
@@ -57,13 +58,7 @@ builder.Services.ConfigureApplicationCookie(options =>
 builder.Services.AddAuthorization(options =>
 {
     options.AddPolicy(Policies.AdminOnly, policy => policy.RequireRole(ApplicationRoles.Admin));
-    options.AddPolicy(Policies.ProjectViewer, policy => policy.AddRequirements(new RequireProjectRoleRequirement(ProjectRole.Viewer)));
-    options.AddPolicy(Policies.ProjectMember, policy => policy.AddRequirements(new RequireProjectRoleRequirement(ProjectRole.Member)));
-    options.AddPolicy(Policies.ProjectManager, policy => policy.AddRequirements(new RequireProjectRoleRequirement(ProjectRole.Manager)));
-    options.AddPolicy(Policies.ProjectOwner, policy => policy.AddRequirements(new RequireProjectRoleRequirement(ProjectRole.Owner)));
 });
-
-builder.Services.AddScoped<IAuthorizationHandler, ProjectRoleAuthorizationHandler>();
 builder.Services.AddScoped<ProjectService>();
 builder.Services.AddScoped<TaskService>();
 
@@ -75,7 +70,7 @@ builder.Services.AddRateLimiter(options =>
 
     options.AddPolicy("auth-brute-force", httpContext =>
         RateLimitPartition.GetFixedWindowLimiter(
-            httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+            GetClientIpAddress(httpContext),
             _ => new FixedWindowRateLimiterOptions
             {
                 PermitLimit = 5,
@@ -133,9 +128,13 @@ else
 {
     app.UseExceptionHandler("/Home/Error");
     app.UseHsts();
+    app.UseForwardedHeaders(new ForwardedHeadersOptions
+    {
+        ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
+    });
 }
 
-app.MigrateDatabase();
+await app.MigrateDatabaseAsync();
 
 app.UseStatusCodePagesWithReExecute("/Home/Error", "?statusCode={0}");
 
@@ -160,6 +159,18 @@ app.MapControllerRoute(
     .WithStaticAssets();
 
 app.Run();
+
+static string GetClientIpAddress(HttpContext context)
+{
+    if (context.Request.Headers.TryGetValue("X-Forwarded-For", out var forwardedFor))
+    {
+        var firstIp = forwardedFor.FirstOrDefault()?.Split(',')[0]?.Trim();
+        if (!string.IsNullOrWhiteSpace(firstIp))
+            return firstIp;
+    }
+
+    return context.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+}
 
 public partial class Program
 {

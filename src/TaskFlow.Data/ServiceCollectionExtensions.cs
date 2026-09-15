@@ -1,3 +1,4 @@
+using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -13,28 +14,42 @@ public static class ServiceCollectionExtensions
         var connectionString = configuration.GetConnectionString("Default");
         var isSqlServer = providerName.Equals(nameof(DatabaseProvider.SqlServer), StringComparison.OrdinalIgnoreCase);
 
-        if (isSqlServer && string.IsNullOrWhiteSpace(connectionString))
-        {
-            throw new InvalidOperationException(
-                "Database:Provider=SqlServer requiere una cadena de conexión. Define ConnectionStrings:Default (por ejemplo, la variable de entorno TF_CONNECTION_STRING).");
-        }
-
-        connectionString ??= "Data Source=taskflow.db";
-
         services.AddScoped<IProjectMembershipReader, ProjectMembershipReader>();
 
         services.AddDbContext<AppDbContext>(options =>
         {
             if (isSqlServer)
             {
+                connectionString = Environment.GetEnvironmentVariable("TF_CONNECTION_STRING") ?? connectionString;
+                ValidateSqlServerConnectionString(connectionString);
                 options.UseSqlServer(connectionString);
             }
             else
             {
-                options.UseSqlite(connectionString);
+                options.UseSqlite(connectionString ?? "Data Source=taskflow.db");
             }
         });
 
         return services;
+    }
+
+    private static void ValidateSqlServerConnectionString(string? connectionString)
+    {
+        if (string.IsNullOrWhiteSpace(connectionString))
+        {
+            throw new InvalidOperationException(
+                "Database:Provider=SqlServer requiere una cadena de conexión. Define ConnectionStrings:Default o la variable de entorno TF_CONNECTION_STRING.");
+        }
+
+        try
+        {
+            _ = new SqlConnectionStringBuilder(connectionString);
+        }
+        catch (ArgumentException exception)
+        {
+            throw new InvalidOperationException(
+                "La cadena de conexión configurada no es válida para SqlServer (¿heredada del proveedor SQLite, por ejemplo \"Data Source=taskflow.db;Cache=Shared\"?). Configura una cadena SqlServer real en ConnectionStrings:Default o TF_CONNECTION_STRING.",
+                exception);
+        }
     }
 }

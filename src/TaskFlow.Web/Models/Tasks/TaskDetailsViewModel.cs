@@ -9,6 +9,7 @@ public sealed class TaskDetailsViewModel
     public TaskItem Task { get; set; } = new();
     public Guid ProjectId { get; set; }
     public string ProjectName { get; set; } = string.Empty;
+    public string? AssigneeName { get; set; }
     public ProjectRole MyRole { get; set; }
     public bool OwnsTask { get; set; }
     public bool CanEdit { get; set; }

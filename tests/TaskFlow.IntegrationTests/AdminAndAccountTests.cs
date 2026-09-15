@@ -20,10 +20,20 @@ public class AdminAndAccountTests
     private static string NewDbPath()
         => $"/tmp/taskflow-admin-{Guid.NewGuid():N}.db";
 
-    private static WebApplicationFactory<Program> CreateFactory(string dbPath)
+    private static WebApplicationFactory<Program> CreateFactory(
+        string dbPath,
+        Action<IWebHostBuilder>? configure = null)
         => new WebApplicationFactory<Program>()
             .WithWebHostBuilder(builder =>
-                builder.UseSetting("ConnectionStrings:Default", $"Data Source={dbPath}"));
+            {
+                builder.UseSetting("ConnectionStrings:Default", $"Data Source={dbPath}");
+                configure?.Invoke(builder);
+            });
+
+    private static WebApplicationFactory<Program> CreateSeededFactory(string dbPath)
+        => CreateFactory(dbPath, builder =>
+            builder.UseSetting("Seed:AdminEmail", "admin@taskflow.local")
+                   .UseSetting("Seed:AdminPassword", "Taskflow#Admin2026"));
 
     private static async Task<AppUser> CreateUserAsync(
         WebApplicationFactory<Program> factory,
@@ -76,7 +86,7 @@ public class AdminAndAccountTests
     [Fact]
     public async Task SeededAdmin_PromoteUserToAdmin_Succeeds()
     {
-        var factory = CreateFactory(NewDbPath());
+        var factory = CreateSeededFactory(NewDbPath());
         await using var _ = factory;
         var target = await CreateUserAsync(factory, "promote@example.com");
         using var client = factory.CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false });
@@ -108,7 +118,7 @@ public class AdminAndAccountTests
     [Fact]
     public async Task SeededAdmin_DemoteOtherAdmin_Succeeds()
     {
-        var factory = CreateFactory(NewDbPath());
+        var factory = CreateSeededFactory(NewDbPath());
         await using var _ = factory;
         var target = await CreateUserAsync(factory, "demote@example.com");
         using var client = factory.CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false });
@@ -147,7 +157,7 @@ public class AdminAndAccountTests
     [Fact]
     public async Task Admin_SelfDemote_IsRejected_AndKeepsRole()
     {
-        var factory = CreateFactory(NewDbPath());
+        var factory = CreateSeededFactory(NewDbPath());
         await using var _ = factory;
         using var client = factory.CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false });
 
@@ -186,7 +196,7 @@ public class AdminAndAccountTests
     [Fact]
     public async Task ToggleAdmin_UnknownUser_ReturnsNotFound()
     {
-        var factory = CreateFactory(NewDbPath());
+        var factory = CreateSeededFactory(NewDbPath());
         await using var _ = factory;
         using var client = factory.CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false });
 
@@ -210,7 +220,7 @@ public class AdminAndAccountTests
     [Fact]
     public async Task ToggleAdmin_EmptyUserId_ReturnsBadRequest()
     {
-        var factory = CreateFactory(NewDbPath());
+        var factory = CreateSeededFactory(NewDbPath());
         await using var _ = factory;
         using var client = factory.CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false });
 
