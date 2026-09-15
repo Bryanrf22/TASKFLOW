@@ -32,6 +32,8 @@ public sealed class TaskService
         if (assigneeId is not null
             && !await _db.ProjectMembers.AnyAsync(m => m.ProjectId == projectId && m.UserId == assigneeId))
             return OperationResult<Guid>.Invalid();
+        if (model.DueDateUtc is not null && model.DueDateUtc < DateTime.UtcNow.Date)
+            return OperationResult<Guid>.Invalid();
 
         var task = new TaskItem
         {
@@ -74,6 +76,12 @@ public sealed class TaskService
 
         task.Title = model.Title.Trim();
         task.Description = model.Description?.Trim() ?? string.Empty;
+
+        if (!TaskStatusTransitions.CanTransition(task.Status, model.Status))
+            return OperationResult.Invalid();
+        if (model.DueDateUtc is not null && model.DueDateUtc < DateTime.UtcNow.Date)
+            return OperationResult.Invalid();
+
         task.Status = model.Status;
         task.Priority = model.Priority;
         task.DueDateUtc = model.DueDateUtc;
@@ -98,11 +106,10 @@ public sealed class TaskService
 
         var projectId = task.ProjectId;
 
+        await using var transaction = await _db.Database.BeginTransactionAsync();
         await _db.TaskComments.Where(c => c.TaskId == taskId).ExecuteDeleteAsync();
-        await _db.TaskHistoryEntries.Where(h => h.TaskId == taskId).ExecuteDeleteAsync();
-        await _db.TaskLabels.Where(tl => tl.TaskId == taskId).ExecuteDeleteAsync();
-        await _db.Notifications.Where(n => n.TaskId == taskId).ExecuteDeleteAsync();
         await _db.TaskItems.Where(t => t.Id == taskId).ExecuteDeleteAsync();
+        await transaction.CommitAsync();
 
         return OperationResult<Guid>.Ok(projectId);
     }
@@ -152,6 +159,9 @@ public sealed class TaskService
             Task = task,
             ProjectId = task.ProjectId,
             ProjectName = project?.Name ?? string.Empty,
+            AssigneeName = task.AssigneeId is null
+                ? null
+                : assignables.FirstOrDefault(m => m.UserId == task.AssigneeId)?.DisplayName,
             MyRole = role.Value,
             OwnsTask = ownsTask,
             CanEdit = Permissions.CanEditTask(role.Value, ownsTask),

@@ -32,7 +32,7 @@
             <dt class="col-4">Vencimiento</dt>
             <dd class="col-8">@(Model.Task.DueDateUtc?.ToString("dd/MM/yyyy") ?? "—")</dd>
             <dt class="col-4">Asignada a</dt>
-            <dd class="col-8">@(Model.Task.AssigneeId is null ? "—" : "Miembro del proyecto")</dd>
+            <dd class="col-8">@(Model.AssigneeName ?? "—")</dd>
             <dt class="col-4">Creada</dt>
             <dd class="col-8">@Model.Task.CreatedAtUtc.ToString("dd/MM/yyyy")</dd>
         </dl>

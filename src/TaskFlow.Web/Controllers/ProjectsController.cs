@@ -10,21 +10,17 @@ using TaskFlow.Web.Services;
 namespace TaskFlow.Web.Controllers;
 
 [Route("Projects")]
-public class ProjectsController : Controller
+public class ProjectsController : AppController
 {
     private readonly ProjectService _projects;
     private readonly TaskService _tasks;
-    private readonly UserManager<AppUser> _userManager;
 
     public ProjectsController(ProjectService projects, TaskService tasks, UserManager<AppUser> userManager)
+        : base(userManager)
     {
         _projects = projects;
         _tasks = tasks;
-        _userManager = userManager;
     }
-
-    private string CurrentUserId()
-        => _userManager.GetUserId(User) ?? throw new InvalidOperationException("Usuario sin identificador.");
 
     [HttpGet("")]
     public async Task<IActionResult> Index()

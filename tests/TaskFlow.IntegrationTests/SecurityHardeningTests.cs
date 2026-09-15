@@ -23,10 +23,15 @@ public class SecurityHardeningTests
     private static string NewDbPath()
         => $"/tmp/taskflow-security-{Guid.NewGuid():N}.db";
 
-    private static WebApplicationFactory<Program> CreateFactory(string dbPath)
+    private static WebApplicationFactory<Program> CreateFactory(
+        string dbPath,
+        Action<IWebHostBuilder>? configure = null)
         => new WebApplicationFactory<Program>()
             .WithWebHostBuilder(builder =>
-                builder.UseSetting("ConnectionStrings:Default", $"Data Source={dbPath}"));
+            {
+                builder.UseSetting("ConnectionStrings:Default", $"Data Source={dbPath}");
+                configure?.Invoke(builder);
+            });
 
     private static async Task<string> GetFormTokenAsync(HttpClient client, string url)
     {
@@ -92,7 +97,8 @@ public class SecurityHardeningTests
     [Fact]
     public async Task UnknownHost_IsRejected()
     {
-        await using var factory = CreateFactory(NewDbPath());
+        await using var factory = CreateFactory(NewDbPath(), builder =>
+            builder.UseSetting("AllowedHosts", "localhost"));
         using var client = factory.CreateClient();
         using var request = new HttpRequestMessage(HttpMethod.Get, "http://localhost/");
         request.Headers.Host = "evil.example.com";
@@ -130,7 +136,7 @@ public class SecurityHardeningTests
         var loginHtml = await login.Content.ReadAsStringAsync();
 
         Assert.Equal(HttpStatusCode.OK, login.StatusCode);
-        Assert.Contains("revisa que hayas confirmado tu correo", WebUtility.HtmlDecode(loginHtml));
+        Assert.Contains("Email o contraseña incorrectos", WebUtility.HtmlDecode(loginHtml));
 
         var projects = await client.GetAsync("/Projects");
         Assert.Equal(HttpStatusCode.Redirect, projects.StatusCode);

@@ -10,6 +10,7 @@ public sealed class LoginViewModel
     public string Email { get; set; } = string.Empty;
 
     [Required(ErrorMessage = "La contraseña es obligatoria.")]
+    [StringLength(128, ErrorMessage = "La contraseña no puede superar los 128 caracteres.")]
     [DataType(DataType.Password)]
     [Display(Name = "Contraseña")]
     public string Password { get; set; } = string.Empty;

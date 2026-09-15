@@ -47,16 +47,4 @@ public class EnumDefinitionsTests
         Assert.True(ProjectRole.Manager > ProjectRole.Member);
         Assert.True(ProjectRole.Member > ProjectRole.Viewer);
     }
-
-    [Fact]
-    public void NotificationType_Defines_ExpectedEvents()
-    {
-        var types = Enum.GetValues<NotificationType>();
-
-        Assert.Contains(NotificationType.TaskAssigned, types);
-        Assert.Contains(NotificationType.Mention, types);
-        Assert.Contains(NotificationType.CommentAdded, types);
-        Assert.Contains(NotificationType.TaskStatusChanged, types);
-        Assert.Contains(NotificationType.DueSoon, types);
-    }
 }

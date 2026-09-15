@@ -7,19 +7,15 @@ using TaskFlow.Web.Services;
 namespace TaskFlow.Web.Controllers;
 
 [Route("Tasks")]
-public class TasksController : Controller
+public class TasksController : AppController
 {
     private readonly TaskService _tasks;
-    private readonly UserManager<AppUser> _userManager;
 
     public TasksController(TaskService tasks, UserManager<AppUser> userManager)
+        : base(userManager)
     {
         _tasks = tasks;
-        _userManager = userManager;
     }
-
-    private string CurrentUserId()
-        => _userManager.GetUserId(User) ?? throw new InvalidOperationException("Usuario sin identificador.");
 
     [HttpGet("{id:guid}")]
     public async Task<IActionResult> Details(Guid id)

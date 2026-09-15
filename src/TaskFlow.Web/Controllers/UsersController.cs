@@ -24,20 +24,23 @@ public class UsersController : Controller
 
     public async Task<IActionResult> Index()
     {
-        var users = _userManager.Users.OrderBy(u => u.Email).ToList();
+        var adminRoleId = await _db.Roles
+            .Where(r => r.Name == ApplicationRoles.Admin)
+            .Select(r => r.Id)
+            .FirstOrDefaultAsync();
 
-        var rows = new List<UserListItemViewModel>(users.Count);
-        foreach (var user in users)
-        {
-            rows.Add(new UserListItemViewModel
+        var rows = await _userManager.Users
+            .OrderBy(u => u.Email)
+            .Select(u => new UserListItemViewModel
             {
-                Id = user.Id,
-                Email = user.Email ?? string.Empty,
-                DisplayName = user.DisplayName,
-                CreatedAtUtc = user.CreatedAtUtc,
-                IsAdministrator = await _userManager.IsInRoleAsync(user, ApplicationRoles.Admin)
-            });
-        }
+                Id = u.Id,
+                Email = u.Email ?? string.Empty,
+                DisplayName = u.DisplayName,
+                CreatedAtUtc = u.CreatedAtUtc,
+                IsAdministrator = adminRoleId != null
+                    && _db.UserRoles.Any(ur => ur.UserId == u.Id && ur.RoleId == adminRoleId)
+            })
+            .ToListAsync();
 
         return View(new UsersListViewModel { Users = rows });
     }

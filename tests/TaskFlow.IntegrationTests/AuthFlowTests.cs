@@ -171,7 +171,9 @@ public class AuthFlowTests
     [Fact]
     public async Task SeededAdmin_CanLogin_AndAccessAdminArea()
     {
-        await using var factory = CreateFactory(NewDbPath());
+        await using var factory = CreateFactory(NewDbPath(), builder =>
+            builder.UseSetting("Seed:AdminEmail", "admin@taskflow.local")
+                   .UseSetting("Seed:AdminPassword", "Taskflow#Admin2026"));
         using var client = factory.CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false });
 
         var login = await PostLoginAsync(client, "admin@taskflow.local", "Taskflow#Admin2026");
