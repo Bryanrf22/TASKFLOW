@@ -22,7 +22,7 @@ COPY --from=build /app .
 
 # Writable directories for the SQLite database and the rolling log file.
 RUN mkdir -p /data /app/Logs \
-    && chown -R $APP_UID /data /app/Logs
+    && chown -R ${APP_UID:-1654} /data /app/Logs
 
 ENV ASPNETCORE_URLS=http://+:8080
 EXPOSE 8080
