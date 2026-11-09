@@ -16,6 +16,7 @@
     <TargetFramework>net10.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <UserSecretsId>taskflow-web-6f1c2a94-3b7d-4c1e-9a52-8d0f4b7e2c61</UserSecretsId>
   </PropertyGroup>
 
 </Project>
